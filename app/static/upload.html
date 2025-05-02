@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YOLOv5 Multi-Image Upload</title>
+</head>
+<body>
+  <h2>Upload Image(s) for Detection</h2>
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" id="file" name="files" accept="image/*" multiple required><br><br>
+    <button type="submit">Upload and Predict</button>
+  </form>
+
+  <h3>Results:</h3>
+  <div id="results"></div>
+
+  <script>
+    const form = document.getElementById('upload-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById('file');
+      const formData = new FormData();
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+      }
+
+      const response = await fetch('/predict/', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      result.forEach(item => {
+        const img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + item.image_base64;
+        img.style.maxWidth = '500px';
+        img.style.marginBottom = '20px';
+
+        resultsDiv.appendChild(img);
+      });
+    });
+  </script>
+</body>
+</html>
