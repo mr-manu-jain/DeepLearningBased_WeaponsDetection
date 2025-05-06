@@ -23,7 +23,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-MODEL_PATH = Path(__file__).parent / "model" / "best.pt"
+MODEL_PATH = Path(__file__).parent / "model" / "yolov5.pt"
 model = torch.hub.load('ultralytics/yolov5', 'custom', path=str(MODEL_PATH))
 model.eval()
 
