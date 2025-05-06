@@ -1,47 +1,573 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>YOLOv5 Multi-Image Upload</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YOLOv5 Object Detection</title>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --success: #4cc9f0;
+      --dark: #212529;
+      --light: #f8f9fa;
+      --gray: #adb5bd;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background-color: #f0f2f5;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 2rem 0;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border: 2px dashed var(--gray);
+      border-radius: 10px;
+      background-color: #f8f9fa;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .upload-container:hover {
+      border-color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .upload-container.highlight {
+      border-color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .upload-icon {
+      font-size: 3rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    
+    .file-input {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .upload-text {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    
+    .upload-text h3 {
+      font-size: 1.5rem;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .upload-text p {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    
+    .button {
+      padding: 0.8rem 1.5rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .button:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-2px);
+    }
+    
+    .button:active {
+      transform: translateY(0);
+    }
+    
+    .button:disabled {
+      background-color: var(--gray);
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .preview-item .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .preview-item .remove-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .loader {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(67, 97, 238, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .results-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    
+    .result-card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease;
+    }
+    
+    .result-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .result-image {
+      width: 100%;
+      height: 250px;
+      object-fit: contain;
+      background-color: #f8f9fa;
+    }
+    
+    .result-info {
+      padding: 1rem;
+    }
+    
+    .result-info h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background-color: var(--success);
+      color: white;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--gray);
+    }
+    
+    .file-count {
+      margin-top: 1rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 3rem;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      header {
+        padding: 1.5rem 0;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Upload Image(s) for Detection</h2>
-  <form id="upload-form" enctype="multipart/form-data">
-    <input type="file" id="file" name="files" accept="image/*" multiple required><br><br>
-    <button type="submit">Upload and Predict</button>
-  </form>
-
-  <h3>Results:</h3>
-  <div id="results"></div>
-
+  <header>
+    <h1>YOLOv5 Object Detection</h1>
+    <p class="subtitle">Upload images to detect objects using YOLOv5</p>
+  </header>
+  
+  <div class="container">
+    <div class="card">
+      <form id="upload-form">
+        <div id="upload-container" class="upload-container">
+          <div class="upload-icon">📂</div>
+          <div class="upload-text">
+            <h3>Drag & Drop Images Here</h3>
+            <p>or click to browse files (JPG, PNG, JPEG)</p>
+          </div>
+          <input type="file" id="file-input" class="file-input" name="files" accept="image/*" multiple required>
+        </div>
+        
+        <div id="preview-container" class="preview-container"></div>
+        
+        <div id="file-count" class="file-count">No files selected</div>
+        
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <button type="submit" id="submit-btn" class="button" disabled>
+            <span id="submit-icon">🔍</span>
+            <span id="submit-text">Detect Objects</span>
+          </button>
+        </div>
+      </form>
+      
+      <div id="loader" class="loader">
+        <div class="spinner"></div>
+        <p>Processing your images...</p>
+      </div>
+    </div>
+    
+    <h3>Detection Results</h3>
+    <div id="results-container" class="results-container">
+      <div class="empty-state">
+        <p>Upload images to see detection results</p>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    <p>Powered by YOLOv5 Object Detection</p>
+  </footer>
+  
   <script>
-    const form = document.getElementById('upload-form');
-    form.addEventListener('submit', async (e) => {
+    // DOM Elements
+    const uploadForm = document.getElementById('upload-form');
+    const uploadContainer = document.getElementById('upload-container');
+    const fileInput = document.getElementById('file-input');
+    const previewContainer = document.getElementById('preview-container');
+    const fileCountElement = document.getElementById('file-count');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitIcon = document.getElementById('submit-icon');
+    const loader = document.getElementById('loader');
+    const resultsContainer = document.getElementById('results-container');
+    
+    // Selected Files Array
+    let selectedFiles = [];
+    
+    // Handle drag and drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadContainer.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
       e.preventDefault();
-
-      const fileInput = document.getElementById('file');
-      const formData = new FormData();
-      for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('files', fileInput.files[i]);
+      e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadContainer.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadContainer.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+      uploadContainer.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+      uploadContainer.classList.remove('highlight');
+    }
+    
+    // Handle file drop
+    uploadContainer.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+    
+    // Handle file input change
+    fileInput.addEventListener('change', function() {
+      handleFiles(this.files);
+    });
+    
+    function handleFiles(files) {
+      if (files.length === 0) return;
+      
+      // Filter for image files only
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+      
+      // Add to selected files array
+      selectedFiles = [...selectedFiles, ...imageFiles];
+      
+      // Update UI
+      updateFileCount();
+      updatePreview();
+      
+      // Enable submit button if files are selected
+      if (selectedFiles.length > 0) {
+        submitBtn.disabled = false;
       }
-
-      const response = await fetch('/predict/', {
-        method: 'POST',
-        body: formData
+    }
+    
+    function updateFileCount() {
+      const count = selectedFiles.length;
+      fileCountElement.textContent = count === 0 
+        ? 'No files selected' 
+        : `${count} ${count === 1 ? 'file' : 'files'} selected`;
+    }
+    
+    function updatePreview() {
+      // Clear previous previews
+      previewContainer.innerHTML = '';
+      
+      // Create preview for each file
+      selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          const previewItem = document.createElement('div');
+          previewItem.className = 'preview-item';
+          
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.innerHTML = '✕';
+          removeBtn.addEventListener('click', () => removeFile(index));
+          
+          previewItem.appendChild(img);
+          previewItem.appendChild(removeBtn);
+          previewContainer.appendChild(previewItem);
+        };
+        
+        reader.readAsDataURL(file);
       });
-
-      const result = await response.json();
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
-
-      result.forEach(item => {
+    }
+    
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateFileCount();
+      updatePreview();
+      
+      // Disable submit button if no files are selected
+      if (selectedFiles.length === 0) {
+        submitBtn.disabled = true;
+      }
+    }
+    
+    // Handle form submission
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (selectedFiles.length === 0) return;
+      
+      // Show loading state
+      submitBtn.disabled = true;
+      submitText.textContent = 'Processing...';
+      submitIcon.textContent = '⏳';
+      loader.style.display = 'flex';
+      
+      // Create FormData
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      try {
+        const response = await fetch('/predict/', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+        
+        const results = await response.json();
+        displayResults(results);
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while processing your images. Please try again.');
+      } finally {
+        // Reset loading state
+        submitBtn.disabled = false;
+        submitText.textContent = 'Detect Objects';
+        submitIcon.textContent = '🔍';
+        loader.style.display = 'none';
+      }
+    });
+    
+    function displayResults(results) {
+      // Clear previous results and empty state
+      resultsContainer.innerHTML = '';
+      
+      if (results.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = '<p>No objects detected in your images</p>';
+        resultsContainer.appendChild(emptyState);
+        return;
+      }
+      
+      // Display each result
+      results.forEach((item, index) => {
+        const resultCard = document.createElement('div');
+        resultCard.className = 'result-card';
+        
         const img = document.createElement('img');
         img.src = 'data:image/jpeg;base64,' + item.image_base64;
-        img.style.maxWidth = '500px';
-        img.style.marginBottom = '20px';
-
-        resultsDiv.appendChild(img);
+        img.className = 'result-image';
+        img.alt = 'Detection Result ' + (index + 1);
+        
+        const resultInfo = document.createElement('div');
+        resultInfo.className = 'result-info';
+        
+        const title = document.createElement('h4');
+        title.textContent = 'Detection ' + (index + 1);
+        
+        resultInfo.appendChild(title);
+        
+        // If we have detection classes/labels, display them as badges
+        if (item.detections && item.detections.length > 0) {
+          const uniqueClasses = [...new Set(item.detections.map(d => d.class))];
+          uniqueClasses.forEach(className => {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.textContent = className;
+            resultInfo.appendChild(badge);
+          });
+        }
+        
+        resultCard.appendChild(img);
+        resultCard.appendChild(resultInfo);
+        resultsContainer.appendChild(resultCard);
       });
-    });
+      
+      // Scroll to results
+      resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
   </script>
 </body>
 </html>
