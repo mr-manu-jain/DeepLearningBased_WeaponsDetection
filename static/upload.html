@@ -4,15 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YOLOv5 Object Detection</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <style>
     :root {
       --primary: #4361ee;
       --primary-light: #4895ef;
+      --secondary: #3f37c9;
       --success: #4cc9f0;
+      --warning: #f72585;
+      --info: #4895ef;
       --dark: #212529;
       --light: #f8f9fa;
       --gray: #adb5bd;
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
     }
     
     * {
@@ -28,6 +34,7 @@
       background-color: #f0f2f5;
       padding: 0;
       margin: 0;
+      overflow-x: hidden;
     }
     
     .container {
@@ -37,30 +44,126 @@
     }
     
     header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
-      padding: 2rem 0;
+      padding: 3rem 0;
       text-align: center;
       margin-bottom: 2rem;
       box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      z-index: 1;
+    }
+    
+    header .content {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: float 15s infinite linear;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 0.5; }
+      90% { opacity: 0.5; }
+      100% { transform: translateY(-500px) translateX(100px); opacity: 0; }
     }
     
     h1 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     
     .subtitle {
-      font-size: 1.1rem;
-      opacity: 0.8;
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 1rem auto;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+    
+    .stat {
+      background-color: rgba(255,255,255,0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .stat i {
+      color: var(--success);
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    
+    @media (min-width: 992px) {
+      .main-content {
+        grid-template-columns: 350px 1fr;
+      }
     }
     
     .card {
       background: white;
-      border-radius: 10px;
+      border-radius: 15px;
       box-shadow: var(--shadow);
       padding: 2rem;
       margin-bottom: 2rem;
+      transition: var(--transition);
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
     .upload-container {
@@ -68,11 +171,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem;
+      padding: 3rem 2rem;
       border: 2px dashed var(--gray);
-      border-radius: 10px;
+      border-radius: 15px;
       background-color: #f8f9fa;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       cursor: pointer;
       position: relative;
       overflow: hidden;
@@ -89,9 +192,14 @@
     }
     
     .upload-icon {
-      font-size: 3rem;
+      font-size: 3.5rem;
       color: var(--primary);
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+    
+    .upload-container:hover .upload-icon {
+      transform: scale(1.1);
     }
     
     .file-input {
@@ -117,27 +225,29 @@
     
     .upload-text p {
       color: var(--gray);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     
     .button {
       padding: 0.8rem 1.5rem;
-      background-color: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 50px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      box-shadow: 0 4px 6px rgba(67, 97, 238, 0.25);
     }
     
     .button:hover {
-      background-color: var(--primary-light);
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
       transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(67, 97, 238, 0.3);
     }
     
     .button:active {
@@ -145,25 +255,46 @@
     }
     
     .button:disabled {
-      background-color: var(--gray);
+      background: linear-gradient(135deg, var(--gray), var(--gray));
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
+    }
+    
+    .button i {
+      transition: var(--transition);
+    }
+    
+    .button:hover i {
+      transform: translateX(3px);
     }
     
     .preview-container {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      margin: 1rem 0;
+      margin: 1.5rem 0;
     }
     
     .preview-item {
       position: relative;
       width: 100px;
       height: 100px;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: var(--transition);
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .preview-item:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     }
     
     .preview-item img {
@@ -180,18 +311,34 @@
       color: white;
       border: none;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
+      opacity: 0;
+    }
+    
+    .preview-item:hover .remove-btn {
+      opacity: 1;
     }
     
     .preview-item .remove-btn:hover {
-      background: rgba(0, 0, 0, 0.8);
+      background: var(--warning);
+      transform: scale(1.1);
+    }
+    
+    .file-count {
+      margin-top: 1rem;
+      color: var(--primary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
     
     .loader {
@@ -204,8 +351,8 @@
     }
     
     .spinner {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       border: 4px solid rgba(67, 97, 238, 0.1);
       border-radius: 50%;
       border-top-color: var(--primary);
@@ -217,70 +364,281 @@
       100% { transform: rotate(360deg); }
     }
     
+    .tab-navigation {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    
+    .tab-button {
+      padding: 0.8rem 1.5rem;
+      background-color: #f8f9fa;
+      color: var(--dark);
+      border: none;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    
+    .tab-button.active {
+      background-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 6px rgba(67, 97, 238, 0.25);
+    }
+    
+    .tab-button:hover:not(.active) {
+      background-color: #e9ecef;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+    
     .results-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
     }
     
     .result-card {
       background: white;
-      border-radius: 10px;
+      border-radius: 15px;
       overflow: hidden;
       box-shadow: var(--shadow);
-      transition: transform 0.3s ease;
+      transition: var(--transition);
+      animation: fadeIn 0.5s ease;
     }
     
     .result-card:hover {
       transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
     
     .result-image {
       width: 100%;
-      height: 250px;
+      height: 220px;
       object-fit: contain;
       background-color: #f8f9fa;
+      transition: var(--transition);
+    }
+    
+    .result-card:hover .result-image {
+      transform: scale(1.02);
     }
     
     .result-info {
-      padding: 1rem;
+      padding: 1.5rem;
     }
     
     .result-info h4 {
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      color: var(--dark);
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
     .badge {
       display: inline-block;
-      padding: 0.25rem 0.5rem;
+      padding: 0.35rem 0.75rem;
       background-color: var(--success);
       color: white;
-      border-radius: 20px;
+      border-radius: 50px;
       font-size: 0.8rem;
       margin-right: 0.5rem;
       margin-bottom: 0.5rem;
+      transition: var(--transition);
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(76, 201, 240, 0.25);
     }
     
     .empty-state {
       text-align: center;
-      padding: 3rem;
+      padding: 4rem 2rem;
       color: var(--gray);
+      background-color: #f8f9fa;
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
     }
     
-    .file-count {
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--primary-light);
+      margin-bottom: 1rem;
+    }
+    
+    .empty-state h3 {
+      color: var(--dark);
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .detection-info {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 1rem;
       margin-top: 1rem;
+    }
+    
+    .detection-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .detection-item:last-child {
+      border-bottom: none;
+    }
+    
+    .detection-class {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .detection-confidence {
+      background-color: var(--primary-light);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+    }
+    
+    .model-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .info-item {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 10px;
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .info-item h4 {
       color: var(--primary);
-      font-weight: 500;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-value {
+      font-size: 0.9rem;
+      color: var(--dark);
+      background-color: white;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border-left: 3px solid var(--primary);
+    }
+    
+    .classes-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
     }
     
     footer {
+      background: linear-gradient(135deg, var(--dark), #2d3436);
+      color: white;
+      padding: 3rem 0;
+      margin-top: 4rem;
+    }
+    
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      padding: 2rem 0;
-      margin-top: 3rem;
-      color: var(--gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .footer-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: white;
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    
+    .footer-link {
+      color: white;
+      opacity: 0.8;
+      transition: var(--transition);
+    }
+    
+    .footer-link:hover {
+      opacity: 1;
+    }
+    
+    .footer-social {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .social-icon {
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: var(--transition);
+    }
+    
+    .social-icon:hover {
+      background-color: var(--primary);
+      transform: translateY(-5px);
+    }
+    
+    .copyright {
+      opacity: 0.7;
       font-size: 0.9rem;
+      margin-top: 2rem;
     }
     
     @media (max-width: 768px) {
@@ -289,11 +647,16 @@
       }
       
       header {
-        padding: 1.5rem 0;
+        padding: 2rem 0;
       }
       
       h1 {
         font-size: 2rem;
+      }
+      
+      .stats {
+        flex-direction: column;
+        gap: 1rem;
       }
       
       .card {
@@ -301,59 +664,271 @@
       }
       
       .results-container {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
+        grid-template-columns: 1fr;
       }
+      
+      .preview-item {
+        width: 80px;
+        height: 80px;
+      }
+      
+      .model-info {
+        flex-direction: column;
+      }
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: rgba(0,0,0,0.8);
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--success);
+      color: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateX(200%);
+      transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      z-index: 1000;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      background-color: var(--warning);
+    }
+    
+    .notification .close-btn {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin-left: 0.5rem;
+      opacity: 0.7;
+      transition: var(--transition);
+    }
+    
+    .notification .close-btn:hover {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>YOLOv5 Object Detection</h1>
-    <p class="subtitle">Upload images to detect objects using YOLOv5</p>
+    <div class="particles" id="particles"></div>
+    <div class="content">
+      <h1 class="animate__animated animate__fadeInDown">YOLOv5 Object Detection</h1>
+      <p class="subtitle animate__animated animate__fadeInUp">Upload images to detect objects with state-of-the-art YOLOv5 model</p>
+      
+      <div class="stats animate__animated animate__fadeIn animate__delay-1s">
+        <div class="stat">
+          <i class="fas fa-bolt"></i>
+          <span>Fast Processing</span>
+        </div>
+        <div class="stat">
+          <i class="fas fa-crosshairs"></i>
+          <span>High Accuracy</span>
+        </div>
+        <div class="stat" id="classes-count">
+          <i class="fas fa-tags"></i>
+          <span>Loading classes...</span>
+        </div>
+      </div>
+    </div>
   </header>
   
   <div class="container">
-    <div class="card">
-      <form id="upload-form">
-        <div id="upload-container" class="upload-container">
-          <div class="upload-icon">📂</div>
-          <div class="upload-text">
-            <h3>Drag & Drop Images Here</h3>
-            <p>or click to browse files (JPG, PNG, JPEG)</p>
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="card animate__animated animate__fadeInLeft">
+          <h2 class="section-title"><i class="fas fa-cloud-upload-alt"></i> Upload Images</h2>
+          <form id="upload-form">
+            <div id="upload-container" class="upload-container">
+              <div class="upload-icon">
+                <i class="fas fa-images"></i>
+              </div>
+              <div class="upload-text">
+                <h3>Drag & Drop Images Here</h3>
+                <p>or click to browse files (JPG, PNG, JPEG)</p>
+              </div>
+              <input type="file" id="file-input" class="file-input" name="files" accept="image/*" multiple required>
+            </div>
+            
+            <div id="preview-container" class="preview-container"></div>
+            
+            <div id="file-count" class="file-count">
+              <i class="fas fa-image"></i>
+              <span>No files selected</span>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+              <button type="submit" id="submit-btn" class="button" disabled>
+                <i class="fas fa-search" id="submit-icon"></i>
+                <span id="submit-text">Detect Objects</span>
+              </button>
+            </div>
+          </form>
+          
+          <div id="loader" class="loader">
+            <div class="spinner"></div>
+            <p>Processing your images...</p>
           </div>
-          <input type="file" id="file-input" class="file-input" name="files" accept="image/*" multiple required>
         </div>
         
-        <div id="preview-container" class="preview-container"></div>
-        
-        <div id="file-count" class="file-count">No files selected</div>
-        
-        <div style="text-align: center; margin-top: 1.5rem;">
-          <button type="submit" id="submit-btn" class="button" disabled>
-            <span id="submit-icon">🔍</span>
-            <span id="submit-text">Detect Objects</span>
+        <div class="card animate__animated animate__fadeInLeft">
+          <h2 class="section-title"><i class="fas fa-info-circle"></i> Model Information</h2>
+          <div id="model-info" class="model-info">
+            <div class="info-item">
+              <h4><i class="fas fa-tag"></i> API Version</h4>
+              <div class="info-value" id="api-version">Loading...</div>
+            </div>
+            <div class="info-item">
+              <h4><i class="fas fa-code-branch"></i> Model</h4>
+              <div class="info-value" id="model-type">Loading...</div>
+            </div>
+            <div class="info-item">
+              <h4><i class="fas fa-cube"></i> Torch Version</h4>
+              <div class="info-value" id="torch-version">Loading...</div>
+            </div>
+          </div>
+          
+          <h3 class="section-title" style="margin-top: 2rem;"><i class="fas fa-tags"></i> Available Classes</h3>
+          <div id="classes-list" class="classes-list">
+            Loading classes...
+          </div>
+        </div>
+      </div>
+      
+      <div class="right-panel">
+        <div class="tab-navigation animate__animated animate__fadeInDown">
+          <button class="tab-button active" data-tab="results">
+            <i class="fas fa-images"></i> Detection Results
+          </button>
+          <button class="tab-button" data-tab="statistics">
+            <i class="fas fa-chart-bar"></i> Statistics
+          </button>
+          <button class="tab-button" data-tab="about">
+            <i class="fas fa-info-circle"></i> About YOLOv5
           </button>
         </div>
-      </form>
-      
-      <div id="loader" class="loader">
-        <div class="spinner"></div>
-        <p>Processing your images...</p>
-      </div>
-    </div>
-    
-    <h3>Detection Results</h3>
-    <div id="results-container" class="results-container">
-      <div class="empty-state">
-        <p>Upload images to see detection results</p>
+        
+        <div class="tab-content active" id="results-tab">
+          <div id="results-container" class="results-container">
+            <div class="empty-state">
+              <i class="fas fa-camera"></i>
+              <h3>No Results Yet</h3>
+              <p>Upload images and click "Detect Objects" to see the detection results</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tab-content" id="statistics-tab">
+          <div class="card">
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i> Detection Statistics</h2>
+            <div id="stats-container">
+              <div class="empty-state">
+                <i class="fas fa-chart-bar"></i>
+                <h3>No Statistics Available</h3>
+                <p>Upload and analyze images to generate detection statistics</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tab-content" id="about-tab">
+          <div class="card">
+            <h2 class="section-title"><i class="fas fa-info-circle"></i> About YOLOv5</h2>
+            <p>YOLOv5 is a family of object detection architectures and models pretrained on the COCO dataset. It represents Ultralytics' open-source research into future vision AI methods, incorporating lessons learned and best practices from thousands of hours of research and development.</p>
+            
+            <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Key Features</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+              <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-check" style="color: var(--success);"></i>
+                <span>Fast and accurate object detection</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-check" style="color: var(--success);"></i>
+                <span>Multiple model sizes for different performance requirements</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-check" style="color: var(--success);"></i>
+                <span>Optimized for production environments</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-check" style="color: var(--success);"></i>
+                <span>Supports multiple export formats (ONNX, TorchScript, etc.)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>
   
   <footer>
-    <p>Powered by YOLOv5 Object Detection</p>
+    <div class="footer-content">
+      <div class="footer-logo">
+        <i class="fas fa-crosshairs"></i> YOLOv5 Object Detection
+      </div>
+      <p>A powerful object detection system using YOLOv5 to identify and locate objects in images</p>
+      
+      <div class="footer-links">
+        <a href="#" class="footer-link">Home</a>
+        <a href="#" class="footer-link">Documentation</a>
+        <a href="#" class="footer-link">GitHub</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+      
+      <div class="footer-social">
+        <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-linkedin"></i></a>
+      </div>
+      
+      <div class="copyright">
+        &copy; 2025 YOLOv5 Object Detection. All rights reserved.
+      </div>
+    </div>
   </footer>
+
+  <div id="notification" class="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notification-message">Operation successful!</span>
+    <button class="close-btn" onclick="closeNotification()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
   
   <script>
     // DOM Elements
@@ -367,9 +942,58 @@
     const submitIcon = document.getElementById('submit-icon');
     const loader = document.getElementById('loader');
     const resultsContainer = document.getElementById('results-container');
+    const notification = document.getElementById('notification');
+    const apiVersionElement = document.getElementById('api-version');
+    const modelTypeElement = document.getElementById('model-type');
+    const torchVersionElement = document.getElementById('torch-version');
+    const classesListElement = document.getElementById('classes-list');
+    const classesCountElement = document.getElementById('classes-count');
+    const statsContainer = document.getElementById('stats-container');
     
     // Selected Files Array
     let selectedFiles = [];
+    let detectionResults = [];
+    let classesData = [];
+    
+    // Create particles for the header background
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particlesCount = 30;
+      
+      for (let i = 0; i < particlesCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particle.style.opacity = Math.random() * 0.5 + 0.1;
+        particle.style.width = `${Math.random() * 6 + 2}px`;
+        particle.style.height = particle.style.width;
+        particle.style.animationDelay = `${Math.random() * 5}s`;
+        particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+        particlesContainer.appendChild(particle);
+      }
+    }
+    
+    // Initialize particles on load
+    window.addEventListener('load', createParticles);
+    
+    // Tab Navigation
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Remove active class from all buttons and tabs
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Add active class to clicked button and corresponding tab
+        button.classList.add('active');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
     
     // Handle drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -428,13 +1052,15 @@
       if (selectedFiles.length > 0) {
         submitBtn.disabled = false;
       }
+      
+      showNotification('Images added successfully!', 'success');
     }
     
     function updateFileCount() {
       const count = selectedFiles.length;
-      fileCountElement.textContent = count === 0 
-        ? 'No files selected' 
-        : `${count} ${count === 1 ? 'file' : 'files'} selected`;
+      fileCountElement.innerHTML = count === 0 
+        ? '<i class="fas fa-image"></i> <span>No files selected</span>' 
+        : `<i class="fas fa-images"></i> <span>${count} ${count === 1 ? 'file' : 'files'} selected</span>`;
     }
     
     function updatePreview() {
@@ -451,10 +1077,11 @@
           
           const img = document.createElement('img');
           img.src = e.target.result;
+          img.alt = file.name;
           
           const removeBtn = document.createElement('button');
           removeBtn.className = 'remove-btn';
-          removeBtn.innerHTML = '✕';
+          removeBtn.innerHTML = '<i class="fas fa-times"></i>';
           removeBtn.addEventListener('click', () => removeFile(index));
           
           previewItem.appendChild(img);
@@ -486,8 +1113,11 @@
       // Show loading state
       submitBtn.disabled = true;
       submitText.textContent = 'Processing...';
-      submitIcon.textContent = '⏳';
+      submitIcon.className = 'fas fa-spinner fa-spin';
       loader.style.display = 'flex';
+      
+      // Clear previous results
+      detectionResults = [];
       
       // Create FormData
       const formData = new FormData();
@@ -506,27 +1136,38 @@
         }
         
         const results = await response.json();
+        detectionResults = results;
         displayResults(results);
+        updateStatistics(results);
+        
+        // Switch to results tab
+        document.querySelector('.tab-button[data-tab="results"]').click();
+        
+        showNotification('Images processed successfully!', 'success');
       } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while processing your images. Please try again.');
+        showNotification('Error processing images: ' + error.message, 'error');
       } finally {
         // Reset loading state
-        submitBtn.disabled = false;
+        submitBtn.disabled = selectedFiles.length === 0;
         submitText.textContent = 'Detect Objects';
-        submitIcon.textContent = '🔍';
+        submitIcon.className = 'fas fa-search';
         loader.style.display = 'none';
       }
     });
     
     function displayResults(results) {
-      // Clear previous results and empty state
+      // Clear previous results
       resultsContainer.innerHTML = '';
       
       if (results.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
-        emptyState.innerHTML = '<p>No objects detected in your images</p>';
+        emptyState.innerHTML = `
+          <i class="fas fa-camera"></i>
+          <h3>No Objects Detected</h3>
+          <p>No objects were detected in your images</p>
+        `;
         resultsContainer.appendChild(emptyState);
         return;
       }
@@ -534,18 +1175,19 @@
       // Display each result
       results.forEach((item, index) => {
         const resultCard = document.createElement('div');
-        resultCard.className = 'result-card';
+        resultCard.className = 'result-card animate__animated animate__fadeIn';
+        resultCard.style.animationDelay = `${index * 0.1}s`;
         
         const img = document.createElement('img');
         img.src = 'data:image/jpeg;base64,' + item.image_base64;
         img.className = 'result-image';
-        img.alt = 'Detection Result ' + (index + 1);
+        img.alt = item.filename || 'Detection Result ' + (index + 1);
         
         const resultInfo = document.createElement('div');
         resultInfo.className = 'result-info';
         
         const title = document.createElement('h4');
-        title.textContent = 'Detection ' + (index + 1);
+        title.innerHTML = `<i class="fas fa-camera"></i> ${item.filename || 'Detection ' + (index + 1)}`;
         
         resultInfo.appendChild(title);
         
@@ -558,6 +1200,34 @@
             badge.textContent = className;
             resultInfo.appendChild(badge);
           });
+          
+          // Add detailed detection info
+          const detectionInfo = document.createElement('div');
+          detectionInfo.className = 'detection-info';
+          
+          item.detections.forEach(detection => {
+            const detectionItem = document.createElement('div');
+            detectionItem.className = 'detection-item';
+            
+            const detectionClass = document.createElement('div');
+            detectionClass.className = 'detection-class';
+            detectionClass.innerHTML = `<i class="fas fa-tag"></i> ${detection.class}`;
+            
+            const detectionConfidence = document.createElement('div');
+            detectionConfidence.className = 'detection-confidence';
+            detectionConfidence.textContent = `${Math.round(detection.confidence * 100)}%`;
+            
+            detectionItem.appendChild(detectionClass);
+            detectionItem.appendChild(detectionConfidence);
+            detectionInfo.appendChild(detectionItem);
+          });
+          
+          resultInfo.appendChild(detectionInfo);
+        } else {
+          const noDectionsMsg = document.createElement('p');
+          noDectionsMsg.textContent = 'No objects detected in this image';
+          noDectionsMsg.style.color = 'var(--gray)';
+          resultInfo.appendChild(noDectionsMsg);
         }
         
         resultCard.appendChild(img);
@@ -568,6 +1238,313 @@
       // Scroll to results
       resultsContainer.scrollIntoView({ behavior: 'smooth' });
     }
+    
+    function updateStatistics(results) {
+      if (!results || results.length === 0) {
+        statsContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-chart-bar"></i>
+            <h3>No Statistics Available</h3>
+            <p>Upload and analyze images to generate detection statistics</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Calculate statistics
+      const allDetections = results.flatMap(r => r.detections || []);
+      const totalDetections = allDetections.length;
+      const classCounts = {};
+      const confidenceData = [];
+      
+      allDetections.forEach(detection => {
+        // Count by class
+        if (!classCounts[detection.class]) {
+          classCounts[detection.class] = 0;
+        }
+        classCounts[detection.class]++;
+        
+        // Collect confidence scores
+        confidenceData.push({
+          class: detection.class,
+          confidence: detection.confidence
+        });
+      });
+      
+      // Create stats HTML
+      statsContainer.innerHTML = '';
+      
+      // Summary card
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'card animate__animated animate__fadeIn';
+      summaryCard.innerHTML = `
+        <h3 class="section-title"><i class="fas fa-list"></i> Detection Summary</h3>
+        <div class="info-item">
+          <h4><i class="fas fa-images"></i> Processed Images</h4>
+          <div class="info-value">${results.length}</div>
+        </div>
+        <div class="info-item">
+          <h4><i class="fas fa-object-group"></i> Total Detections</h4>
+          <div class="info-value">${totalDetections}</div>
+        </div>
+        <div class="info-item">
+          <h4><i class="fas fa-tag"></i> Unique Classes</h4>
+          <div class="info-value">${Object.keys(classCounts).length}</div>
+        </div>
+      `;
+      statsContainer.appendChild(summaryCard);
+      
+      // Class distribution card
+      const classDistCard = document.createElement('div');
+      classDistCard.className = 'card animate__animated animate__fadeIn';
+      classDistCard.innerHTML = `<h3 class="section-title"><i class="fas fa-chart-pie"></i> Class Distribution</h3>`;
+      
+      if (Object.keys(classCounts).length > 0) {
+        const classDistTable = document.createElement('table');
+        classDistTable.style.width = '100%';
+        classDistTable.style.borderCollapse = 'collapse';
+        classDistTable.style.marginTop = '1rem';
+        
+        // Create table header
+        const tableHead = document.createElement('thead');
+        tableHead.innerHTML = `
+          <tr>
+            <th style="text-align: left; padding: 0.75rem; border-bottom: 2px solid #e9ecef;">Class</th>
+            <th style="text-align: center; padding: 0.75rem; border-bottom: 2px solid #e9ecef;">Count</th>
+            <th style="text-align: right; padding: 0.75rem; border-bottom: 2px solid #e9ecef;">Percentage</th>
+          </tr>
+        `;
+        classDistTable.appendChild(tableHead);
+        
+        // Create table body
+        const tableBody = document.createElement('tbody');
+        Object.entries(classCounts)
+          .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
+          .forEach(([className, count]) => {
+            const percentage = ((count / totalDetections) * 100).toFixed(1);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td style="padding: 0.75rem; border-bottom: 1px solid #e9ecef;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge" style="margin: 0;">${className}</span>
+                </div>
+              </td>
+              <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e9ecef;">${count}</td>
+              <td style="text-align: right; padding: 0.75rem; border-bottom: 1px solid #e9ecef;">
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                  <div style="width: 100px; height: 8px; background-color: #f0f2f5; border-radius: 4px; overflow: hidden;">
+                    <div style="height: 100%; width: ${percentage}%; background-color: var(--primary);"></div>
+                  </div>
+                  ${percentage}%
+                </div>
+              </td>
+            `;
+            tableBody.appendChild(row);
+          });
+        classDistTable.appendChild(tableBody);
+        classDistCard.appendChild(classDistTable);
+      } else {
+        classDistCard.innerHTML += `
+          <div class="empty-state" style="padding: 2rem 0;">
+            <p>No class distribution data available</p>
+          </div>
+        `;
+      }
+      
+      statsContainer.appendChild(classDistCard);
+    }
+    
+    // API Endpoint Testing Functions
+    
+    // Create API endpoint buttons in the model info section
+    function createEndpointButtons() {
+      const modelInfo = document.getElementById('model-info');
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.style.marginTop = '2rem';
+      buttonsContainer.innerHTML = `
+        <h3 class="section-title"><i class="fas fa-server"></i> Test API Endpoints</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <button class="button" style="width: 100%; text-align: center; justify-content: center;" onclick="testHealthEndpoint()">
+            <i class="fas fa-heart"></i> Health
+          </button>
+          <button class="button" style="width: 100%; text-align: center; justify-content: center;" onclick="testVersionEndpoint()">
+            <i class="fas fa-code-branch"></i> Version
+          </button>
+          <button class="button" style="width: 100%; text-align: center; justify-content: center;" onclick="testClassesEndpoint()">
+            <i class="fas fa-tags"></i> Classes
+          </button>
+          <button class="button" style="width: 100%; text-align: center; justify-content: center;" onclick="testPredictMultipleEndpoint()" id="test-predict-multiple-btn" disabled>
+            <i class="fas fa-images"></i> Predict Multiple
+          </button>
+        </div>
+        
+        <div id="endpoint-response" style="margin-top: 1.5rem; display: none;">
+          <h4 style="margin-bottom: 0.5rem; color: var(--primary);">Endpoint Response:</h4>
+          <pre id="response-content" style="background-color: #f8f9fa; padding: 1rem; border-radius: 10px; overflow-x: auto; max-height: 300px; font-size: 0.9rem;"></pre>
+        </div>
+      `;
+      
+      modelInfo.parentNode.insertBefore(buttonsContainer, modelInfo.nextSibling);
+      
+      // Update predict-multiple button state based on selected files
+      setInterval(() => {
+        const testPredictMultipleBtn = document.getElementById('test-predict-multiple-btn');
+        if (testPredictMultipleBtn) {
+          testPredictMultipleBtn.disabled = selectedFiles.length === 0;
+        }
+      }, 1000);
+    }
+    
+    async function testHealthEndpoint() {
+      await testEndpoint('/health/', 'Health Check');
+    }
+    
+    async function testVersionEndpoint() {
+      await testEndpoint('/version/', 'Version Info');
+    }
+    
+    async function testClassesEndpoint() {
+      await testEndpoint('/classes/', 'Available Classes');
+    }
+    
+    async function testPredictMultipleEndpoint() {
+      if (selectedFiles.length === 0) {
+        showNotification('Please select files first', 'error');
+        return;
+      }
+      
+      const endpointResponseEl = document.getElementById('endpoint-response');
+      const responseContentEl = document.getElementById('response-content');
+      endpointResponseEl.style.display = 'block';
+      responseContentEl.textContent = 'Processing...';
+      
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      try {
+        const response = await fetch('/predict-multiple/', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+        
+        const result = await response.json();
+        responseContentEl.textContent = JSON.stringify(result, null, 2);
+        showNotification('Predict Multiple endpoint tested successfully', 'success');
+      } catch (error) {
+        console.error('Error:', error);
+        responseContentEl.textContent = `Error: ${error.message}`;
+        showNotification('Error testing endpoint: ' + error.message, 'error');
+      }
+    }
+    
+    async function testEndpoint(url, title) {
+      const endpointResponseEl = document.getElementById('endpoint-response');
+      const responseContentEl = document.getElementById('response-content');
+      endpointResponseEl.style.display = 'block';
+      responseContentEl.textContent = 'Loading...';
+      
+      try {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+        
+        const result = await response.json();
+        responseContentEl.textContent = JSON.stringify(result, null, 2);
+        showNotification(`${title} endpoint tested successfully`, 'success');
+      } catch (error) {
+        console.error('Error:', error);
+        responseContentEl.textContent = `Error: ${error.message}`;
+        showNotification('Error testing endpoint: ' + error.message, 'error');
+      }
+    }
+    
+    // Fetch model info and classes on load
+    async function fetchModelInfo() {
+      try {
+        // Fetch health info
+        const healthResponse = await fetch('/health/');
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json();
+          modelTypeElement.textContent = healthData.model_type || 'YOLOv5';
+        }
+        
+        // Fetch version info
+        const versionResponse = await fetch('/version/');
+        if (versionResponse.ok) {
+          const versionData = await versionResponse.json();
+          apiVersionElement.textContent = versionData.api_version || '1.0.0';
+          torchVersionElement.textContent = versionData.torch_version || 'Latest';
+        }
+        
+        // Fetch classes info
+        const classesResponse = await fetch('/classes/');
+        if (classesResponse.ok) {
+          const classesData = await classesResponse.json();
+          const classes = classesData.classes || [];
+          
+          // Update classes count in header
+          classesCountElement.innerHTML = `
+            <i class="fas fa-tags"></i>
+            <span>${classes.length} Detection Classes</span>
+          `;
+          
+          // Update classes list
+          classesListElement.innerHTML = '';
+          classes.forEach(className => {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.textContent = className;
+            classesListElement.appendChild(badge);
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching model info:', error);
+        showNotification('Error fetching model information', 'error');
+      }
+    }
+    
+    // Notification functions
+    function showNotification(message, type = 'success') {
+      const notificationEl = document.getElementById('notification');
+      const messageEl = document.getElementById('notification-message');
+      const iconEl = notificationEl.querySelector('i:first-child');
+      
+      // Set message and icon
+      messageEl.textContent = message;
+      
+      if (type === 'success') {
+        notificationEl.className = 'notification';
+        iconEl.className = 'fas fa-check-circle';
+      } else if (type === 'error') {
+        notificationEl.className = 'notification error';
+        iconEl.className = 'fas fa-exclamation-circle';
+      }
+      
+      // Show notification
+      notificationEl.classList.add('show');
+      
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        closeNotification();
+      }, 5000);
+    }
+    
+    function closeNotification() {
+      const notificationEl = document.getElementById('notification');
+      notificationEl.classList.remove('show');
+    }
+    
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      createEndpointButtons();
+      fetchModelInfo();
+    });
   </script>
-</body>
-</html>
