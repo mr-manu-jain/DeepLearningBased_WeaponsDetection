@@ -260,9 +260,10 @@ main {
 }
 
 .dropzone.has-file {
-  border-style: solid;
-  border-color: var(--primary-light);
-  background: #f8f9ff;
+  height: auto;
+  padding: 24px;
+  background: #fff;
+  overflow: visible;    /* no scrollbars or clipping */
 }
 
 .dropzone input[type="file"] {
@@ -325,15 +326,22 @@ main {
   box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
 }
 
-/* File Preview */
+/* Each preview box */
 .preview-container {
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  position: relative;
+  flex: 0 0 auto;       /* don’t stretch; size to content */
+  max-width: 200px;      /* cap each preview’s width */
+  width: 100%;
+}
+/* The image itself */
+.preview-container img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .file-preview {
@@ -344,6 +352,15 @@ main {
   transition: var(--transition);
   object-fit: contain;
 }
+
+.preview-grid {
+  display: flex;
+  flex-wrap: wrap;      /* wrap into multiple rows if needed */
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+}
+
 
 .file-preview:hover {
   transform: scale(1.02);
