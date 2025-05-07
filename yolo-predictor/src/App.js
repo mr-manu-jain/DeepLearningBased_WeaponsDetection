@@ -17,7 +17,9 @@ function App() {
   const [apiResponse, setApiResponse] = useState(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
-  // New state for lightbox
+  // New state for tracking approved/rejected items
+  const [approvalStatus, setApprovalStatus] = useState({});
+  // State for lightbox
   const [lightbox, setLightbox] = useState({
     isOpen: false,
     imgSrc: ''
@@ -106,6 +108,7 @@ function App() {
     setError('');
     setResults([]);
     setApiResponse(null);
+    setApprovalStatus({}); // Reset approval status
     const formData = new FormData();
     formData.append('files', selectedFile);
     try {
@@ -138,6 +141,15 @@ function App() {
     return stringified;
   };
 
+  // Handle approval/rejection
+  const handleApproval = (resultIndex, model, isApproved) => {
+    const key = `${resultIndex}-${model}`;
+    setApprovalStatus(prev => ({
+      ...prev,
+      [key]: isApproved
+    }));
+  };
+
   // Function to open lightbox
   const openLightbox = (imgSrc) => {
     setLightbox({
@@ -168,6 +180,7 @@ function App() {
             <span><i className="fas fa-bolt"></i> Fast Processing</span>
             <span><i className="fas fa-bullseye"></i> High Accuracy</span>
             <span><i className="fas fa-search"></i> Multiple Models</span>
+            <span><i className="fas fa-check-circle"></i> Human Verification</span>
           </div>
         </div>
       </header>
@@ -261,32 +274,59 @@ function App() {
                   <div key={i} className="result-card">
                     <h3>Detection Result {i+1}</h3>
                     <div className="result-images">
-                      {Object.entries(result.results).map(([model, data]) => (
-                        <div key={model} className="image-block">
-                          <div className="model-label">{model}</div>
-                          <div className="image-container">
-                            <img 
-                              src={`data:image/jpeg;base64,${data.image_base64}`} 
-                              alt={model} 
-                              className="zoomable-image"
-                              onClick={() => openLightbox(`data:image/jpeg;base64,${data.image_base64}`)}
-                            />
-                            <div className="detection-count">
-                              {data.detections.length} {data.detections.length === 1 ? 'detection' : 'detections'}
+                      {Object.entries(result.results).map(([model, data]) => {
+                        const approvalKey = `${i}-${model}`;
+                        const currentStatus = approvalStatus[approvalKey];
+                        
+                        return (
+                          <div key={model} className="image-block">
+                            <div className="model-label">{model}</div>
+                            <div className={`image-container ${currentStatus !== undefined ? (currentStatus ? 'approved' : 'rejected') : ''}`}>
+                              <img 
+                                src={`data:image/jpeg;base64,${data.image_base64}`} 
+                                alt={model} 
+                                className="zoomable-image"
+                                onClick={() => openLightbox(`data:image/jpeg;base64,${data.image_base64}`)}
+                              />
+                              <div className="detection-count">
+                                {data.detections.length} {data.detections.length === 1 ? 'detection' : 'detections'}
+                              </div>
+                              {currentStatus !== undefined && (
+                                <div className={`verification-badge ${currentStatus ? 'approved-badge' : 'rejected-badge'}`}>
+                                  <i className={`fas ${currentStatus ? 'fa-check' : 'fa-times'}`}></i>
+                                  {currentStatus ? 'Approved' : 'Rejected'}
+                                </div>
+                              )}
+                            </div>
+                            <div className="detections-list">
+                              {data.detections.map((detection, index) => (
+                                <div className="detection-item" key={index}>
+                                  <span className="detection-class">{detection.class}</span>
+                                  <span className="detection-confidence">
+                                    {Math.round(detection.confidence * 100)}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Yes/No buttons */}
+                            <div className="approval-buttons">
+                              <button 
+                                className={`approval-btn approve ${currentStatus === true ? 'active' : ''}`}
+                                onClick={() => handleApproval(i, model, true)}
+                              >
+                                <i className="fas fa-check"></i> Yes
+                              </button>
+                              <button 
+                                className={`approval-btn reject ${currentStatus === false ? 'active' : ''}`}
+                                onClick={() => handleApproval(i, model, false)}
+                              >
+                                <i className="fas fa-times"></i> No
+                              </button>
                             </div>
                           </div>
-                          <div className="detections-list">
-                            {data.detections.map((detection, index) => (
-                              <div className="detection-item" key={index}>
-                                <span className="detection-class">{detection.class}</span>
-                                <span className="detection-confidence">
-                                  {Math.round(detection.confidence * 100)}%
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))
@@ -334,6 +374,18 @@ function App() {
                   <div className="stat-content">
                     <div className="stat-value">{stats.uniqueClasses}</div>
                     <div className="stat-label">Unique Classes</div>
+                  </div>
+                </div>
+                
+                <div className="stat-card">
+                  <div className="stat-icon">
+                    <i className="fas fa-check-circle"></i>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">
+                      {Object.values(approvalStatus).filter(status => status === true).length}
+                    </div>
+                    <div className="stat-label">Approved Results</div>
                   </div>
                 </div>
               </div>
