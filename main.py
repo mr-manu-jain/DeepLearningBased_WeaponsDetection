@@ -181,3 +181,40 @@ async def version() -> Dict:
         "torch_version": torch.__version__,
         "models_available": list(MODELS.keys())
     }
+
+@app.post("/predict-yolov8/")
+async def predict_yolov8(
+    files: List[UploadFile] = File(...)
+) -> List[Dict]:
+    results_data = []
+
+    for file in files:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+
+        try:
+            rendered, preds, class_names = run_inference("yolov8", img)
+        except Exception as e:
+            return [{"filename": file.filename, "error": str(e)}]
+
+        output_buffer = io.BytesIO()
+        rendered.save(output_buffer, format="JPEG")
+        base64_image = base64.b64encode(output_buffer.getvalue()).decode("utf-8")
+
+        detections = []
+        for pred in preds:
+            x1, y1, x2, y2, conf, cls = pred
+            detections.append({
+                "class": class_names[int(cls)],
+                "confidence": round(float(conf), 4),
+                "bbox": [round(x1, 2), round(y1, 2), round(x2, 2), round(y2, 2)]
+            })
+
+        results_data.append({
+            "filename": file.filename,
+            "model_used": "yolov8",
+            "detections": detections,
+            "image_base64": base64_image
+        })
+
+    return results_data
