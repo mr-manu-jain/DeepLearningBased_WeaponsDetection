@@ -8,6 +8,7 @@ import torch
 import io
 import base64
 import os
+import json 
 from PIL import Image
 from pathlib import Path
 from typing import List, Dict, Any
@@ -189,44 +190,66 @@ async def predict_all(files: List[UploadFile] = File(...)) -> List[Dict]:
 @app.post("/save-approved/")
 async def save_approved(approval_data: Dict[str, Any] = Body(...)) -> Dict:
     """
-    Save approved detection data
+    Save approved or not-approved detection data
     
     Expected body format:
     {
         "filename": "image.jpg",
         "model_name": "yolov5",
         "original_base64": "base64_encoded_image_data",
-        "detections": [{"class": "knife", "bbox": [x1, y1, x2, y2], ...}, ...]
+        "detections": [{"class": "knife", "bbox": [x1, y1, x2, y2], ...}, ...],
+        "approved": true  # or false
     }
     """
     try:
-        filename = approval_data.get("filename")
-        model_name = approval_data.get("model_name")
+        filename        = approval_data.get("filename")
+        model_name      = approval_data.get("model_name")
         original_base64 = approval_data.get("original_base64")
-        detections = approval_data.get("detections", [])
+        detections      = approval_data.get("detections", [])
+        approved        = approval_data.get("approved")
 
-        if not all([filename, model_name, original_base64]):
+        if not all([filename, model_name, original_base64]) or approved is None:
             return JSONResponse(
                 status_code=400,
                 content={"success": False, "error": "Missing required data"}
             )
-        
-        success = save_prediction_data(
-            original_base64, 
-            filename, 
-            model_name, 
-            detections, 
-            SAVE_DIR
-        )
-        
-        if success:
-            return {"success": True, "message": f"Saved approved detection for {filename} using {model_name}"}
-        else:
-            return JSONResponse(status_code=500,content={"success": False, "error": "Failed to save data"})
 
-    
+        # choose subfolder based on approval flag
+        subfolder = "Approved" if approved else "NotApproved"
+        base_path = os.path.join(SAVE_DIR, subfolder)
+        img_path  = os.path.join(base_path, "images")
+        txt_path  = base_path
+
+        # ensure directories exist
+        os.makedirs(img_path, exist_ok=True)
+        os.makedirs(txt_path, exist_ok=True)
+
+        # decode and save image
+        img_data = base64.b64decode(original_base64)
+        full_img_path = os.path.join(img_path, filename)
+        with open(full_img_path, "wb") as img_file:
+            img_file.write(img_data)
+
+        # save detections to a .txt file (one JSON blob)
+        txt_filename = os.path.splitext(filename)[0] + ".txt"
+        full_txt_path = os.path.join(txt_path, txt_filename)
+        with open(full_txt_path, "w") as txt_file:
+            txt_file.write(json.dumps({
+                "model": model_name,
+                "approved": approved,
+                "detections": detections
+            }, indent=2))
+
+        return {
+            "success": True,
+            "message": f"Saved {'approved' if approved else 'not approved'} data for {filename}"
+        }
+
     except Exception as e:
-        return JSONResponse(status_code=500,content={"success": False, "error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
 
 
 @app.get("/classes/")

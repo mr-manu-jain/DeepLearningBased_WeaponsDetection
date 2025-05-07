@@ -88,6 +88,38 @@ function App() {
     ).then(setPreviewUrls);
   };
 
+// at the top of App(), after your other hooks:
+const handleApproval = async (fileIndex, modelName, approved) => {
+  const block = results[fileIndex]?.results[modelName];
+  if (!block) return;
+
+  // add the approved flag here
+  const approvalData = {
+    filename: selectedFiles[fileIndex].name,
+    model_name: modelName,
+    original_base64: previewUrls[fileIndex].split(',')[1],
+    detections: block.detections.map(d => ({
+      class:      d.class,
+      bbox:       d.bbox,
+      confidence: d.confidence,
+    })),
+    approved,   // ← new
+  };
+
+  try {
+    const res = await axios.post('/save-approved/', approvalData);
+    console.log('Save response', res.data);
+    setApprovalStatus(s => ({
+      ...s,
+      [`${fileIndex}-${modelName}`]: approved
+    }));
+  } catch (err) {
+    console.error('Failed to save approval:', err);
+  }
+};
+
+
+
   const handleFileChange = e => handleFiles(e.target.files);
   const handleDrop = e => {
     e.preventDefault();
@@ -283,17 +315,18 @@ function App() {
                           <div className="approval-buttons">
                             <button
                               className={`approval-btn approve ${status===true?'active':''}`}
-                              onClick={()=>setApprovalStatus(s=>({...s,[key]:true}))}
+                              onClick={() => handleApproval(i, model, true)}
                             >
                               <i className="fas fa-check" /> Yes
                             </button>
                             <button
                               className={`approval-btn reject ${status===false?'active':''}`}
-                              onClick={()=>setApprovalStatus(s=>({...s,[key]:false}))}
+                              onClick={() => handleApproval(i, model, false)}
                             >
                               <i className="fas fa-times" /> No
                             </button>
                           </div>
+
                         </div>
                       );
                     })}
