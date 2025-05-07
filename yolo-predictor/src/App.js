@@ -17,6 +17,11 @@ function App() {
   const [apiResponse, setApiResponse] = useState(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  // New state for lightbox
+  const [lightbox, setLightbox] = useState({
+    isOpen: false,
+    imgSrc: ''
+  });
 
   useEffect(() => {
     // Fetch initial model info
@@ -51,6 +56,21 @@ function App() {
     const uniqueClasses = Object.keys(classCounts).length;
     setStats({ processed, totalDetections, uniqueClasses, distribution: classCounts });
   }, [results]);
+
+  // Close lightbox on escape key press
+  useEffect(() => {
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape' && lightbox.isOpen) {
+        closeLightbox();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [lightbox.isOpen]);
 
   const handleFileChange = e => {
     const file = e.target.files[0];
@@ -118,6 +138,26 @@ function App() {
     return stringified;
   };
 
+  // Function to open lightbox
+  const openLightbox = (imgSrc) => {
+    setLightbox({
+      isOpen: true,
+      imgSrc
+    });
+    // Prevent body scrolling when lightbox is open
+    document.body.style.overflow = 'hidden';
+  };
+
+  // Function to close lightbox
+  const closeLightbox = () => {
+    setLightbox({
+      isOpen: false,
+      imgSrc: ''
+    });
+    // Re-enable body scrolling
+    document.body.style.overflow = 'auto';
+  };
+
   return (
     <div className="App">
       <header className="hero">
@@ -145,7 +185,12 @@ function App() {
               
               {previewUrl ? (
                 <div className="preview-container">
-                  <img src={previewUrl} alt="Preview" className="file-preview" />
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="file-preview zoomable-image" 
+                    onClick={() => openLightbox(previewUrl)}
+                  />
                   <div className="file-name">{selectedFile?.name}</div>
                 </div>
               ) : (
@@ -220,7 +265,12 @@ function App() {
                         <div key={model} className="image-block">
                           <div className="model-label">{model}</div>
                           <div className="image-container">
-                            <img src={`data:image/jpeg;base64,${data.image_base64}`} alt={model} />
+                            <img 
+                              src={`data:image/jpeg;base64,${data.image_base64}`} 
+                              alt={model} 
+                              className="zoomable-image"
+                              onClick={() => openLightbox(`data:image/jpeg;base64,${data.image_base64}`)}
+                            />
                             <div className="detection-count">
                               {data.detections.length} {data.detections.length === 1 ? 'detection' : 'detections'}
                             </div>
@@ -430,6 +480,18 @@ function App() {
           )}
         </section>
       </main>
+      
+      {/* Lightbox Component */}
+      {lightbox.isOpen && (
+        <div className="lightbox-overlay" onClick={closeLightbox}>
+          <div className="lightbox-container" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={closeLightbox}>
+              <i className="fas fa-times"></i>
+            </button>
+            <img src={lightbox.imgSrc} alt="Enlarged view" className="lightbox-image" />
+          </div>
+        </div>
+      )}
       
       <footer className="app-footer">
         <p>X-Ray Detection System &copy; {new Date().getFullYear()}</p>
