@@ -1,0 +1,16 @@
+{
+  "model": "best",
+  "approved": true,
+  "detections": [
+    {
+      "class": "Straight_Knife",
+      "bbox": [
+        454.09,
+        322.86,
+        701.32,
+        389.22
+      ],
+      "confidence": 0.693
+    }
+  ]
+}
