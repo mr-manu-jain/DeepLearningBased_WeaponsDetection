@@ -8,7 +8,7 @@ import torch
 import io
 import base64
 import os
-import json 
+import json
 from PIL import Image
 from pathlib import Path
 from typing import List, Dict, Any
@@ -38,15 +38,19 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 try:
     yolov5_path = MODEL_DIR / "yolov5.pt"
     yolov8_path = MODEL_DIR / "yolov8.pt"
+    best_model_path = MODEL_DIR / "best.pt"
 
     if not yolov5_path.exists():
         raise FileNotFoundError(f"{yolov5_path} not found.")
     if not yolov8_path.exists():
         raise FileNotFoundError(f"{yolov8_path} not found.")
+    if not best_model_path.exists():
+        raise FileNotFoundError(f"{best_model_path} not found.")
 
     MODELS = {
         "yolov5": torch.hub.load('ultralytics/yolov5', 'custom', path=str(yolov5_path)),
         "yolov8": YOLO(str(yolov8_path)),
+        "best": YOLO(str(best_model_path)),
     }
 
     MODELS["yolov5"].eval()
@@ -71,7 +75,7 @@ def run_inference(model_name: str, img: Image.Image):
         preds = results.pred[0].tolist()
         class_names = model.names
 
-    elif model_name == "yolov8":
+    elif model_name in ["yolov8", "best"]:
         results = model.predict(img, verbose=False)
         rendered = results[0].plot(pil=True)
         preds = results[0].boxes.data.tolist()
@@ -83,25 +87,12 @@ def run_inference(model_name: str, img: Image.Image):
     return rendered, preds, class_names
 
 def save_prediction_data(image_data: str, filename: str, model_name: str, detections: List[Dict], save_dir: Path):
-    """
-    Save the original image and detection data to disk
-    
-    Args:
-        image_data: Base64 encoded image data
-        filename: Original filename
-        model_name: Name of the model used
-        detections: List of detection dictionaries
-        save_dir: Directory to save files
-    """
-    # Create a subfolder for images if not exists
     img_dir = save_dir / "images"
     os.makedirs(img_dir, exist_ok=True)
-    # Save the original image if it doesn't already exist
     image_save_path = img_dir / filename
 
     if not image_save_path.exists():
         try:
-            # Remove the prefix if it exists (e.g., "data:image/jpeg;base64,")
             if "," in image_data:
                 image_data = image_data.split(",", 1)[1]
 
@@ -112,7 +103,6 @@ def save_prediction_data(image_data: str, filename: str, model_name: str, detect
             print(f"Error saving image: {e}")
             return False
 
-    # Save bounding box data
     txt_filename = f"{model_name}_{Path(filename).stem}.txt"
     txt_path = save_dir / txt_filename
 
@@ -121,13 +111,11 @@ def save_prediction_data(image_data: str, filename: str, model_name: str, detect
             for det in detections:
                 cls = det["class"]
                 bbox = det["bbox"]
-                # Format: imagename class x1 y1 x2 y2
                 f.write(f"{filename} {cls} {bbox[0]} {bbox[1]} {bbox[2]} {bbox[3]}\n")
         return True
     except Exception as e:
         print(f"Error saving detection data: {e}")
         return False
-
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -151,7 +139,6 @@ async def predict_all(files: List[UploadFile] = File(...)) -> List[Dict]:
                 rendered.save(output_buffer, format="JPEG")
                 base64_image = base64.b64encode(output_buffer.getvalue()).decode("utf-8")
 
-                # Get original image in base64 for saving later if approved
                 original_buffer = io.BytesIO()
                 img.save(original_buffer, format="JPEG")
                 original_base64 = base64.b64encode(original_buffer.getvalue()).decode("utf-8")
@@ -169,7 +156,7 @@ async def predict_all(files: List[UploadFile] = File(...)) -> List[Dict]:
                 per_model_results[model_name] = {
                     "detections": detections,
                     "image_base64": base64_image,
-                    "original_base64": original_base64  # Add original image for saving later
+                    "original_base64": original_base64
                 }
 
             except Exception as e:
@@ -189,18 +176,6 @@ async def predict_all(files: List[UploadFile] = File(...)) -> List[Dict]:
 
 @app.post("/save-approved/")
 async def save_approved(approval_data: Dict[str, Any] = Body(...)) -> Dict:
-    """
-    Save approved or not-approved detection data
-    
-    Expected body format:
-    {
-        "filename": "image.jpg",
-        "model_name": "yolov5",
-        "original_base64": "base64_encoded_image_data",
-        "detections": [{"class": "knife", "bbox": [x1, y1, x2, y2], ...}, ...],
-        "approved": true  # or false
-    }
-    """
     try:
         filename        = approval_data.get("filename")
         model_name      = approval_data.get("model_name")
@@ -214,23 +189,19 @@ async def save_approved(approval_data: Dict[str, Any] = Body(...)) -> Dict:
                 content={"success": False, "error": "Missing required data"}
             )
 
-        # choose subfolder based on approval flag
         subfolder = "Approved" if approved else "NotApproved"
         base_path = os.path.join(SAVE_DIR, subfolder)
         img_path  = os.path.join(base_path, "images")
         txt_path  = base_path
 
-        # ensure directories exist
         os.makedirs(img_path, exist_ok=True)
         os.makedirs(txt_path, exist_ok=True)
 
-        # decode and save image
         img_data = base64.b64decode(original_base64)
         full_img_path = os.path.join(img_path, filename)
         with open(full_img_path, "wb") as img_file:
             img_file.write(img_data)
 
-        # save detections to a .txt file (one JSON blob)
         txt_filename = os.path.splitext(filename)[0] + ".txt"
         full_txt_path = os.path.join(txt_path, txt_filename)
         with open(full_txt_path, "w") as txt_file:
@@ -251,15 +222,13 @@ async def save_approved(approval_data: Dict[str, Any] = Body(...)) -> Dict:
             content={"success": False, "error": str(e)}
         )
 
-
 @app.get("/classes/")
 async def get_classes(model_name: str = Query("yolov5", enum=get_model_names())) -> Dict:
     model = MODELS.get(model_name)
     if model is None:
         return {"error": "Model not found"}
-    
-    return {"classes": list(model.names.values())}
 
+    return {"classes": list(model.names.values())}
 
 @app.get("/health/")
 async def health() -> Dict:
