@@ -46,16 +46,13 @@ Security screenings rely on X-ray scans to catch prohibited items in luggage. Ou
    git clone https://github.com/your-org/xray-weapon-detection.git
    cd xray-weapon-detection
 
-1. **Run The Backend**  
+2. **Run The Backend**  
    ```bash
+   pip install -r requirements.txt
    python main.py
-   
 
-
-1. **Run the Frontend**  
+3. **Run the Frontend**  
    ```bash
    cd Yolo-predictor
    npm install
    npm start
-   
-
