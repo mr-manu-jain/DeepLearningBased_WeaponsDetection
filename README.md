@@ -28,16 +28,6 @@ Security screenings rely on X-ray scans to catch prohibited items in luggage. Ou
 
 ---
 
-## 🧑‍🤝‍🧑 Team Contributions & Task Distribution
-
-| Module                                | Primary Owner | Shadow        | Support                                   |
-|---------------------------------------|---------------|---------------|-------------------------------------------|
-| **1. Dataset Prep & Preprocessing**   | Raj           | Akshar        | Manu & Dhruvil                            |
-| **2. Model Architecture & Impl.**     | Dhruvil       | Raj           | Akshar & Manu                             |
-| **3. Model Evaluation & Testing**     | Manu          | Dhruvil       | Raj & Akshar                              |
-| **4. Deployment & Integration**       | Akshar        | Manu          | Dhruvil & Raj                             |
-| **5. Env. Setup (TF/PyTorch, DVC)**   | **Collaborative** – All members share setup and focal-loss code. |
-| **6. Documentation & Reporting**      | **Collaborative** – Ongoing docs, final report, and presentation. |
 
 ---
 ## ⚙️ Setup & Running Locally
